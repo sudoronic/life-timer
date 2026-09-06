@@ -28,10 +28,15 @@ function ageAt(birthDate: Date, now: Date) {
 }
 
 function App() {
-  const [dob, setDob] = useState('')
+  const [birthMonth, setBirthMonth] = useState('')
+  const [birthDay, setBirthDay] = useState('')
+  const [birthYear, setBirthYear] = useState('')
   const [now, setNow] = useState(() => new Date())
   const [lifespanYears, setLifespanYears] = useState('80')
   const [dailyMinutes, setDailyMinutes] = useState(() => Object.fromEntries(categories.map((item) => [item.id, item.minutes])))
+  const dob = birthMonth && birthDay && birthYear
+    ? `${birthYear.padStart(4, '0')}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
+    : ''
 
   useEffect(() => {
     if (!dob) return
@@ -42,7 +47,12 @@ function App() {
   const result = useMemo(() => {
     if (!dob) return null
     const birthDate = new Date(`${dob}T00:00:00`)
-    if (Number.isNaN(birthDate.getTime()) || birthDate > now) return { error: 'Choose a date in the past to start your timer.' }
+    const validDate = !Number.isNaN(birthDate.getTime())
+      && birthDate.getFullYear() === Number(birthYear)
+      && birthDate.getMonth() === Number(birthMonth) - 1
+      && birthDate.getDate() === Number(birthDay)
+      && birthDate <= now
+    if (!validDate) return { error: 'Choose a valid date in the past to start your timer.' }
     const livedMinutes = (now.getTime() - birthDate.getTime()) / 60000
     const years = Number(lifespanYears)
     const lifespanMinutes = (Number.isFinite(years) && years > 0 ? years : 80) * 365.25 * MINUTES_PER_DAY
@@ -50,7 +60,9 @@ function App() {
   }, [dob, lifespanYears, now])
 
   const reset = () => {
-    setDob('')
+    setBirthMonth('')
+    setBirthDay('')
+    setBirthYear('')
     setLifespanYears('80')
     setDailyMinutes(Object.fromEntries(categories.map((item) => [item.id, item.minutes])))
   }
@@ -68,8 +80,13 @@ function App() {
           <section className="start-card">
             <div className="start-hero"><Sparkles size={28} /><h2>Start your personal timer</h2><p>Enter your date of birth. Everything is calculated locally in your browser and nothing is saved.</p></div>
             <div className="start-content">
-              <label htmlFor="dob">Date of birth</label>
-              <input id="dob" type="date" max={new Date().toISOString().slice(0, 10)} value={dob} onChange={(event) => setDob(event.target.value)} />
+              <label>Date of birth</label>
+              <div className="date-fields">
+                <div><label htmlFor="birth-month">Month</label><input id="birth-month" inputMode="numeric" type="text" maxLength={2} placeholder="MM" value={birthMonth} onChange={(event) => setBirthMonth(event.target.value.replace(/\D/g, '').slice(0, 2))} /></div>
+                <div><label htmlFor="birth-day">Day</label><input id="birth-day" inputMode="numeric" type="text" maxLength={2} placeholder="DD" value={birthDay} onChange={(event) => setBirthDay(event.target.value.replace(/\D/g, '').slice(0, 2))} /></div>
+                <div className="year-field"><label htmlFor="birth-year">Year</label><input id="birth-year" inputMode="numeric" type="text" maxLength={4} placeholder="YYYY" value={birthYear} onChange={(event) => setBirthYear(event.target.value.replace(/\D/g, '').slice(0, 4))} /></div>
+              </div>
+              <span className="date-hint">Enter month, day, and year — for example, 08 / 24 / 2001.</span>
               {result && 'error' in result && <span className="error">{result.error}</span>}
               <div className="note"><Info size={16} /><span>Your timer starts at midnight on your birth date. This is a reflection tool, not a prediction.</span></div>
               <button className="primary-button" disabled={!dob} onClick={() => setNow(new Date())}>See my life in minutes <ArrowDownRight size={18} /></button>
