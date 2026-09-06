@@ -57,7 +57,7 @@ function App() {
     const years = Number(lifespanYears)
     const lifespanMinutes = (Number.isFinite(years) && years > 0 ? years : 80) * 365.25 * MINUTES_PER_DAY
     return { livedMinutes, lifespanMinutes, remainingMinutes: Math.max(0, lifespanMinutes - livedMinutes), age: ageAt(birthDate, now) }
-  }, [dob, lifespanYears, now])
+  }, [birthDay, birthMonth, birthYear, dob, lifespanYears, now])
 
   const reset = () => {
     setBirthMonth('')
